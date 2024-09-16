@@ -31,7 +31,7 @@ Para abordar a questão de investigação, foi aplicada a **Metodologia PRISMA**
      - Tipo de LLM ou LAM utilizado
      - Limitações do estudo
 
-
+[Semana_1/Metodologia_Prisma.docx]
 
 ## LLMs e LAMs: Diferenças
 Durante a pesquisa, foi dada especial atenção à identificação de **modelos pré-treinados** de **LLMs** e **LAMs** que podem ser utilizados ou adaptados para o desenvolvimento de chatbots clínicos. Foram explorados os seguintes tópicos:
@@ -40,5 +40,6 @@ Durante a pesquisa, foi dada especial atenção à identificação de **modelos 
    - Análise dos principais modelos disponíveis, como **GPT (LLM)** e outros relacionados a **real-time learning models (LAMs)**.
    - Revisão das bases de dados de inteligência artificial, como **Hugging Face**, para identificar modelos que possam ser ajustados ao contexto clínico.
 
+[Semana_1/LLMs VS LAMs.docx]
 
 
