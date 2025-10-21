@@ -1,0 +1,217 @@
+
+/* =========================================================
+   DASHBOARDS – ESTILO BASE (modo claro)                  
+   ========================================================= */
+
+body {
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 15px;
+  color: #343a40;
+}
+
+/* ================= Avatar do Chatbot e Médico ================= */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;    /* Mantém a proporção e faz crop central */
+  display: inline-block;
+}
+
+/* Caso queiras um avatar ligeiramente maior para o médico */
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-block;
+  margin-left: .5rem;
+}
+
+
+/* ﹥ Cabeçalho ------------------------------------------------ */
+.header {
+  background-color: #456382;
+  color: #fff;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+.header h4 { margin: 0; font-weight: 600; font-size: 20px; }
+
+.btn-logout {
+  background:#fff; color:#456382; font-weight:500;
+  border:none; padding:6px 14px; border-radius:20px;
+  transition:all .2s ease-in-out;
+}
+.btn-logout:hover { background:#e0e0e0; }
+
+/* ﹥ Chat ----------------------------------------------------- */
+.chatbox2 {
+  background:#f8f9fa;
+  border-radius:10px;
+  padding:1.5rem;
+  height:250px;
+  box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+
+/* ﹥ Tabela/DataTables --------------------------------------- */
+.card        { border:none; border-radius:10px; overflow:hidden; }
+.card-header { background:#fff; font-size:16px; border-bottom:1px solid #dee2e6; }
+
+table            { border-radius:8px; overflow:hidden; }
+thead th         { background:#f1f1f1 !important; font-weight:600; font-size:14px; color:#495057; }
+table tr         { border-bottom:1px solid #dee2e6; }
+table td         { vertical-align:middle; font-size:14px; }
+
+/* ﹥ Área redimensionável do chat ---------------------------- */
+.resize-box {
+  resize:vertical; overflow:auto;
+  min-height:150px; max-height:500px;
+  border:1px solid #dee2e6; border-radius:10px;
+}
+
+/* =========================================================
+   MODO ESCURO (aplicado quando <html data-bs-theme='dark'>)
+   ========================================================= */
+
+[data-bs-theme='dark'] {
+  /* redefinições globais */
+  --bs-body-bg:#202428;
+  --bs-body-color:#f0f2f4;
+  --bs-card-bg:#1e1f21;
+  --bs-card-border-color:#383a3f;
+  --bs-secondary-bg:#2b2d31;    /* cinza usado no chat */
+  --bs-primary-rgb:69,99,130;   /* tua cor de marca */
+}
+
+[data-bs-theme='dark'] body        { background:var(--bs-body-bg); color:var(--bs-body-color); }
+[data-bs-theme='dark'] .header     { background:#456382; box-shadow:none; }
+[data-bs-theme='dark'] .btn-logout { background:#fff; color:#456382; }
+[data-bs-theme='dark'] .btn-logout:hover { background:#e0e0e0; }
+
+[data-bs-theme='dark'] .card,
+[data-bs-theme='dark'] .card-header,
+[data-bs-theme='dark'] table.dataTable   { background:var(--bs-card-bg); color:var(--bs-body-color); }
+[data-bs-theme='dark'] .card-header      { border-bottom:1px solid var(--bs-card-border-color); }
+
+[data-bs-theme='dark'] thead th  { background:var(--bs-tertiary-bg)!important; color:#cdd1d5; }
+[data-bs-theme='dark'] table tr,
+[data-bs-theme='dark'] .resize-box { border-color:var(--bs-card-border-color); }
+
+/* bolhas do chat – userText definida inline como azul da marca */
+.userText { background:#456382; color:#fff; }
+[data-bs-theme='dark'] .botText { background:var(--bs-secondary-bg)!important; color:var(--bs-body-color); }
+
+/* form-controls e dropdowns */
+[data-bs-theme='dark'] .form-control {
+  background:var(--bs-secondary-bg);
+  border-color:var(--bs-card-border-color);
+  color:var(--bs-body-color);
+}
+[data-bs-theme='dark'] .form-control::placeholder { color:#adb5bd; }
+[data-bs-theme='dark'] .dropdown-menu             { background:var(--bs-card-bg); color:var(--bs-body-color); }
+[data-bs-theme='dark'] .dropdown-item:hover       { background:var(--bs-secondary-bg); }
+
+/* scrollbar (webkit) */
+[data-bs-theme='dark'] ::-webkit-scrollbar        { width:10px; }
+[data-bs-theme='dark'] ::-webkit-scrollbar-track  { background:#1a1c1e; }
+[data-bs-theme='dark'] ::-webkit-scrollbar-thumb  { background:#44464b; border-radius:5px; }
+
+
+/* chatbox exterior */
+[data-bs-theme='dark'] .chatbox2 {
+  background: var(--bs-card-bg);          /* #1e1f21 */
+  color: var(--bs-body-color);            /* texto claro */
+}
+
+/* cabeçalho branco “Pacientes do Dia” dentro da card */
+[data-bs-theme='dark'] .card-header.bg-white {
+  background: var(--bs-card-bg)!important;
+  color: var(--bs-body-color);
+  border-bottom: 1px solid var(--bs-card-border-color);
+}
+
+.dropdown .dropdown-menu a i { margin-right: .25rem; }
+
+/* =========================================================
+   CHAT – BOLHAS E INDICADOR DE DIGITAÇÃO
+   ========================================================= */
+
+/* Bolhas de mensagem */
+.userText,
+.botText {
+  position: relative;
+  padding: .75rem 1rem;
+  max-width: 80%;
+  border-radius: 16px;
+  margin-bottom: .5rem;
+  word-wrap: break-word;
+}
+.userText {
+  background: #456382;
+  color: #fff;
+  align-self: flex-end;
+}
+.botText {
+  background: #f1f3f5;
+  color: #212529;
+  align-self: flex-start;
+}
+
+/* “Caudas” nas bolhas */
+.userText::after,
+.botText::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.userText::after {
+  border-left: 8px solid #456382;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  right: -8px;
+  bottom: .6rem;
+}
+.botText::after {
+  border-right: 8px solid #f1f3f5;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  left: -8px;
+  bottom: .6rem;
+}
+
+/* Scroll suave */
+.chatbox2 {
+  display: flex;
+  flex-direction: column;
+}
+.chatbox2 .flex-grow-1 {
+  scroll-behavior: smooth;
+}
+
+
+
+/* Indicador de “digitação” */
+#typingIndicator {
+  display: flex;
+  gap: .25rem;
+  padding: .5rem;
+  align-self: flex-start;
+}
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  background: #999;
+  border-radius: 50%;
+  animation: bounce 1s infinite ease-in-out both;
+}
+.typing-dot:nth-child(2) { animation-delay: .2s; }
+.typing-dot:nth-child(3) { animation-delay: .4s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40%           { transform: translateY(-6px); }
+}
+

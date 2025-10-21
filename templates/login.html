@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link rel="stylesheet" href="/static/style_login.css">
+</head>
+<body>
+  <div class="chatbot-container login-container">
+    <div class="chat-header">
+      <img src="/static/chatbot.png" alt="Chatbot Avatar" class="chatbot-avatar">
+      
+    </div>
+    <div class="chatbox">
+        <h4 style="text-align: center;">Login</h4>
+      <form action="/" method="POST">
+        <!-- Campo do Nome de Utilizador -->
+        <div class="input-with-icon">
+          <input type="text" name="username" placeholder="Nome de Utilizador" required>
+        </div>
+
+        <!-- Campo da Palavra-passe -->
+        <div class="input-with-icon">
+          <input type="password" name="password" placeholder="Palavra-passe" required>
+          <span class="input-icon password-toggle">
+            <i class="fas fa-eye" onclick="togglePasswordVisibility()"></i>
+        </span>
+        </div>
+
+        <!-- Botão de Login -->
+        <div class="user-input">
+          <button type="submit" id="buttonInput">Entrar</button>
+        </div>
+        {% if error %}
+                <p class="error-message">{{ error }}</p>
+            {% endif %}
+      </form>
+    </div>
+  </div>
+</body>
+</html>
+
+

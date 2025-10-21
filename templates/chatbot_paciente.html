@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Detalhes do Paciente</title>
+  <!-- Vendors CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- App CSS (inclui todas as regras de chat) -->
+  <link rel="stylesheet" href="/static/style_paciente.css">
+</head>
+<body>
+  <div class="container my-5" style="max-width:900px;">
+    <div class="row shadow rounded" style="overflow:hidden;">
+
+      <!-- Lado esquerdo: Detalhes do Paciente -->
+      <div class="col-md-6 p-4 bg-white">
+        <h5>Detalhes do Paciente</h5>
+        <h3 class="mb-1">{{ paciente.nome }}</h3>
+        <p class="text-secondary">Idade: {{ paciente.idade }} &nbsp;&nbsp; Sexo: {{ paciente.sexo }}</p>
+
+        <hr>
+        <h6>Histórico Recente</h6>
+        <strong>Exames</strong>
+        <ul class="list-group mb-3">
+          {% for exame in paciente.exames %}
+            <li class="list-group-item py-2">{{ exame.data }} – {{ exame.nome }}</li>
+          {% else %}
+            <li class="list-group-item py-2"><em>Sem exames recentes.</em></li>
+          {% endfor %}
+        </ul>
+
+        <strong>Agendamentos</strong>
+        <ul class="list-group mb-3">
+          {% for consulta in paciente.consultas %}
+            <li class="list-group-item py-2">
+              {{ consulta.data }} às {{ consulta.hora }} &mdash; {{ consulta.tipo }}
+            </li>
+          {% else %}
+            <li class="list-group-item py-2"><em>Sem consultas agendadas.</em></li>
+          {% endfor %}
+        </ul>
+
+        <a href="{{ url_for('dashboard') }}"
+           class="btn text-white"
+           style="background:#456382; border-color:#456382;">
+          <i class="bi bi-arrow-left-circle me-1"></i>Voltar ao Dashboard
+        </a>
+      </div>
+
+      <!-- Lado direito: Chatbot Clínico -->
+      <div class="col-md-6 p-4 bg-white d-flex flex-column">
+        <div class="card shadow-sm flex-grow-1" style="border-radius: 1rem; overflow: hidden;">
+          <div class="card-header d-flex justify-content-between align-items-center"
+               style="background:#456382; color:#fff; border-bottom:none;">
+            <strong>Assistente Clínico</strong>
+            <div class="d-flex align-items-center gap-2">
+              <button id="clearChat" class="btn btn-light btn-sm" title="Limpar histórico">
+                <i class="bi bi-trash"></i>
+              </button>
+              <button id="exportChat" class="btn btn-light btn-sm" title="Exportar histórico">
+                <i class="bi bi-save"></i>
+              </button>
+              <button id="themeToggle" class="btn btn-outline-light btn-sm" title="Alternar modo">
+                <i id="themeIcon" class="bi bi-moon-fill"></i>
+              </button>
+            </div>
+          </div>
+
+          <div id="chatbox" class="card-body d-flex flex-column" style="height:350px; overflow-y:auto;"></div>
+
+          <div class="card-footer bg-light">
+            <div class="input-group">
+              <input id="textInput" class="form-control" placeholder="Digite a sua pergunta…">
+              <button id="buttonInput" class="btn btn-primary d-flex align-items-center">
+                <i class="bi bi-send-fill me-1"></i>Enviar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Vendors JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Chat logic -->
+  <script>
+    const chatbox   = document.getElementById('chatbox');
+    const textInput = document.getElementById('textInput');
+    const btnInput  = document.getElementById('buttonInput');
+    const clearBtn  = document.getElementById('clearChat');
+    const exportBtn = document.getElementById('exportChat');
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon   = document.getElementById('themeIcon');
+    const history   = [];
+    const paciente  = {{ paciente_id | safe }};
+
+    function scrollToBottom() {
+      chatbox.scrollTo({ top: chatbox.scrollHeight, behavior: 'smooth' });
+    }
+
+    function createTypingIndicator() {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'd-flex mb-3 justify-content-start';
+      wrapper.innerHTML = `
+        <img src="/static/chatbot.png" class="avatar me-2" alt="Chatbot">
+        <div class="botText d-flex align-items-center">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>`;
+      return wrapper;
+    }
+
+    // Cria o HTML do badge SQL (com tooltip e modal via data attr)
+    function sqlBadgeHTML(sql) {
+      const encoded = encodeURIComponent(sql);
+      return `
+        <span class="badge bg-secondary ms-2 sql-badge"
+              role="button"
+              data-sql="${encoded}"
+              data-bs-toggle="tooltip"
+              data-bs-placement="top"
+              title="Ver SQL">SQL</span>`;
+    }
+
+    function addMessage(sender, text, sql) {
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('d-flex','mb-3', sender==='user'?'justify-content-end':'justify-content-start');
+
+      if (sender === 'user') {
+        wrapper.innerHTML = `
+          <div class="userText">${text}</div>
+          <img src="/static/doctor.png" class="avatar ms-2" alt="Médico">`;
+      } else {
+        wrapper.innerHTML = `
+          <img src="/static/chatbot.png" class="avatar me-2" alt="Chatbot">
+          <div class="botText">${text || ''}${sql ? sqlBadgeHTML(sql) : ''}</div>`;
+      }
+
+      chatbox.appendChild(wrapper);
+
+      // (Re)inicializa tooltips do Bootstrap para os badges novos
+      const ttEls = wrapper.querySelectorAll('[data-bs-toggle="tooltip"]');
+      [...ttEls].forEach(el => new bootstrap.Tooltip(el));
+
+      scrollToBottom();
+    }
+
+    function loadIntro() {
+      addMessage('bot',
+        `Olá, estás a ver os detalhes de <strong>{{ paciente.nome }}</strong>.<br>
+         Em que posso ajudar?`
+      );
+    }
+
+    clearBtn.onclick = () => {
+      chatbox.innerHTML = '';
+      history.length = 0;
+      loadIntro();
+    };
+
+    exportBtn.onclick = () => {
+      const blob = new Blob([JSON.stringify(history,null,2)],{type:'application/json'});
+      const url  = URL.createObjectURL(blob);
+      Object.assign(document.createElement('a'),{href:url,download:`chat_${Date.now()}.json`}).click();
+      URL.revokeObjectURL(url);
+    };
+
+    async function sendMessage() {
+      const msg = textInput.value.trim();
+      if (!msg) return;
+      addMessage('user', msg);
+      history.push({role:'user', content: msg});
+      textInput.value = '';
+      textInput.disabled = btnInput.disabled = true;
+
+      const typingWrap = createTypingIndicator();
+      chatbox.appendChild(typingWrap);
+      scrollToBottom();
+
+      try {
+        const r = await fetch('/consulta_paciente', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ mensagem: msg, paciente_id: paciente })
+        });
+        const res = await r.json();
+        const botMsg = res.resposta?.mensagem || res.erro || 'Erro inesperado.';
+        const sqlStr = res.resposta?.sql || null;
+
+        typingWrap.remove();
+        addMessage('bot', botMsg, sqlStr);
+        history.push({role:'assistant', content: botMsg});
+      } catch {
+        typingWrap.remove();
+        addMessage('bot','Erro ao contactar o servidor.');
+      } finally {
+        textInput.disabled = btnInput.disabled = false;
+      }
+    }
+
+    // Delegação de eventos: clique no badge abre modal com a SQL completa
+    chatbox.addEventListener('click', (ev) => {
+      const badge = ev.target.closest('.sql-badge');
+      if (!badge) return;
+
+      const sql = decodeURIComponent(badge.dataset.sql || '');
+      const pre = document.getElementById('sqlContent');
+      pre.textContent = sql; // segura contra HTML injection
+
+      const modal = new bootstrap.Modal(document.getElementById('sqlModal'));
+      modal.show();
+    });
+
+    btnInput.addEventListener('click', sendMessage);
+    textInput.addEventListener('keypress', e => {
+      if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+    });
+
+    function setTheme(t){
+      document.documentElement.setAttribute('data-bs-theme', t);
+      localStorage.setItem('theme', t);
+      themeIcon.className = t==='dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    }
+    (()=>{
+      const saved = localStorage.getItem('theme');
+      const pref  = matchMedia('(prefers-color-scheme:dark)').matches;
+      setTheme(saved? saved : (pref?'dark':'light'));
+    })();
+    themeToggle.addEventListener('click', ()=>{
+      const next = document.documentElement.getAttribute('data-bs-theme')==='dark' ? 'light' : 'dark';
+      setTheme(next);
+    });
+
+    window.addEventListener('DOMContentLoaded', loadIntro);
+  </script>
+
+  <!-- Modal para mostrar a SQL completa -->
+  <div class="modal fade" id="sqlModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Query SQL executada</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <pre id="sqlContent" class="mb-0 small" style="white-space:pre-wrap;"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

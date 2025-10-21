@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard Médico</title>
+
+  <!-- Vendors CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <!-- App CSS -->
+  <link rel="stylesheet" href="/static/style_dashboard.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header d-flex justify-content-between align-items-center px-3 py-2">
+    <h4 class="mb-0 text-white">Dashboard</h4>
+    <div class="d-flex align-items-center gap-2">
+      <button id="themeToggle" class="btn btn-sm btn-outline-light" title="Alternar modo">
+        <i id="themeIcon" class="bi bi-moon-fill"></i>
+      </button>
+      <button class="btn btn-logout btn-sm" onclick="location.href='/logout'">Logout</button>
+    </div>
+  </header>
+
+  <h5 class="text-secondary fw-semibold mt-4 ms-5"> 
+    Bem-vindo(a), Dr(a). <span class="fw-bold">{{ nome_medico|title }}</span>!
+  </h5>
+
+  <div class="container mt-4">
+    <div class="row g-4">
+      <!-- TABLE -->
+      <div class="col-md-8">
+        <div class="card shadow-sm">
+          <div class="card-header bg-white"><strong class="d-block mb-3">Pacientes do Dia</strong></div>
+          <div class="card-body">
+            <table id="myTable" class="table w-100">
+              <thead>
+                <tr><th>ID</th><th>Nome</th><th>Ver Detalhes</th></tr>
+              </thead>
+              <tbody>
+                {% for paciente in pacientes %}
+                  <tr>
+                    <td>{{ paciente.id }}</td>
+                    <td>{{ paciente.nome }}</td>
+                    <td>
+                      <a href="{{ url_for('detalhes_paciente', paciente_id=paciente.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye-fill me-1"></i>Ver Detalhes
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <div class="col-md-4 d-flex flex-column">
+        <div class="card shadow-sm flex-grow-1" style="border-radius:1rem; overflow:hidden;">
+          <div class="card-header d-flex justify-content-between align-items-center" style="background:#456382; color:#fff;">
+            <strong>Perguntas Rápidas</strong>
+            <div class="d-flex align-items-center gap-2">
+              <button id="clearChat" class="btn btn-light btn-sm" title="Limpar"><i class="bi bi-trash"></i></button>
+              <button id="exportChat" class="btn btn-light btn-sm" title="Exportar"><i class="bi bi-save"></i></button>
+            </div>
+          </div>
+
+          <div id="chatboxGlobal" class="card-body d-flex flex-column" style="height:330px; overflow-y:auto; padding:1rem;">
+            <!-- Mensagem inicial + quick replies -->
+            <div class="d-flex mb-3 justify-content-start">
+              <img src="/static/chatbot.png" class="avatar me-2" alt="Chatbot">
+              <div class="botText">
+                <p>O que gostavas de saber? Algumas sugestões...</p>
+                <button class="btn btn-outline-primary btn-sm me-1" onclick="sendMsg('Quantos pacientes tenho hoje?')">Quantos pacientes tenho hoje?</button>
+                <button class="btn btn-outline-primary btn-sm me-1" onclick="sendMsg('Consultas agendadas amanhã?')">Consultas agendadas amanhã?</button>
+                <button class="btn btn-outline-primary btn-sm me-1" onclick="sendMsg('Pacientes este mês?')">Pacientes este mês?</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-footer bg-light">
+            <div class="input-group">
+              <input id="inputGlobal" class="form-control" placeholder="Digite a pergunta…">
+              <button id="buttonGlobal" class="btn btn-primary d-flex align-items-center">
+                <i class="bi bi-send-fill me-1"></i>Enviar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal SQL -->
+  <div class="modal fade" id="sqlModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Query SQL executada</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <pre id="sqlContent" class="mb-0 small" style="white-space:pre-wrap;"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // DATATABLE
+    $(function(){
+      $('#myTable').DataTable({responsive:true,pageLength:10,language:{url:'//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-PT.json'}});
+    });
+
+    const chatbox = document.getElementById('chatboxGlobal');
+    const input   = document.getElementById('inputGlobal');
+    const button  = document.getElementById('buttonGlobal');
+    const history = [];
+
+    function scrollToBottom(){ chatbox.scrollTo({ top: chatbox.scrollHeight, behavior: 'smooth' }); }
+
+    function createTyping(){
+      const w = document.createElement('div');
+      w.className = 'd-flex mb-3 justify-content-start';
+      w.innerHTML = `
+        <img src="/static/chatbot.png" class="avatar me-2" alt="Chatbot">
+        <div class="botText d-flex align-items-center">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>`;
+      return w;
+    }
+
+    function sqlBadgeHTML(sql){
+      const encoded = encodeURIComponent(sql);
+      return `<span class="badge bg-secondary ms-2 sql-badge"
+                    role="button"
+                    data-sql="${encoded}"
+                    data-bs-toggle="tooltip"
+                    title="Ver SQL">SQL</span>`;
+    }
+
+    function addMessage(sender, text, sql=null){
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('d-flex','mb-3', sender==='user'?'justify-content-end':'justify-content-start');
+
+      if(sender==='user'){
+        wrapper.innerHTML = `<div class="userText">${text}</div><img src="/static/doctor.png" class="avatar ms-2" alt="Médico">`;
+      } else {
+        wrapper.innerHTML = `<img src="/static/chatbot.png" class="avatar me-2" alt="Chatbot">
+                             <div class="botText">${text || ''}${sql ? sqlBadgeHTML(sql) : ''}</div>`;
+      }
+      chatbox.appendChild(wrapper);
+      scrollToBottom();
+    }
+
+    async function sendMsg(msgOverride){
+      const msg = msgOverride || input.value.trim(); if(!msg) return;
+      addMessage('user', msg);
+      history.push({role:'user', content: msg});
+      input.value=''; button.disabled = input.disabled = true;
+      const t = createTyping(); chatbox.appendChild(t); scrollToBottom();
+      try{
+        const res = await (await fetch('/consulta',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({mensagem: msg})
+        })).json();
+
+        t.remove();
+        const respostaTexto = res.resposta || res.mensagem || "Sem resposta.";
+        const sqlQuery = res.sql || null;
+        addMessage('bot', respostaTexto, sqlQuery);
+        history.push({role:'assistant', content: respostaTexto, sql: sqlQuery});
+      } catch {
+        t.remove(); addMessage('bot','Erro ao contactar o servidor.');
+      } finally {
+        button.disabled = input.disabled = false;
+      }
+    }
+
+    // Clique no badge SQL → abre modal
+    chatbox.addEventListener('click', ev=>{
+      const badge = ev.target.closest('.sql-badge');
+      if(!badge) return;
+      const sql = decodeURIComponent(badge.dataset.sql || '');
+      document.getElementById('sqlContent').textContent = sql;
+      new bootstrap.Modal(document.getElementById('sqlModal')).show();
+    });
+
+    // Quick replies
+    document.getElementById('clearChat').onclick = ()=>{ chatbox.innerHTML=''; history.length=0; };
+    document.getElementById('exportChat').onclick = ()=>{
+      const blob=new Blob([JSON.stringify(history,null,2)],{type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      Object.assign(document.createElement('a'),{href:url,download:`chat_${Date.now()}.json`}).click();
+      URL.revokeObjectURL(url);
+    };
+
+    button.addEventListener('click', ()=>sendMsg());
+    input.addEventListener('keypress', e=>{ if(e.key==='Enter'){ e.preventDefault(); sendMsg(); }});
+
+    // THEME
+    function setTheme(t){
+      document.documentElement.setAttribute('data-bs-theme', t);
+      localStorage.setItem('theme', t);
+      themeIcon.className = t==='dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    }
+    (()=>{
+      const saved = localStorage.getItem('theme');
+      const pref  = matchMedia('(prefers-color-scheme:dark)').matches;
+      setTheme(saved? saved : (pref?'dark':'light'));
+    })();
+    themeToggle.addEventListener('click', ()=>{
+      const next = document.documentElement.getAttribute('data-bs-theme')==='dark' ? 'light' : 'dark';
+      setTheme(next);
+    });
+  </script>
+
+  <footer class="text-center mt-4 mb-3">
+    <small class="text-muted fst-italic">
+          O chatbot pode cometer erros.  As informações fornecidas são indicativas e devem ser confirmadas antes de qualquer decisão clínica.
+    </small>
+  </footer>
+</body>
+</html>
+    
+</body>
+</html>
